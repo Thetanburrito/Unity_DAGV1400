@@ -4,30 +4,137 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
-    //Initializing all the 'public' variables needed for player movement and control
-    [SerializeField] private float walkSpeed = 5f;
-    [SerializeField] private float jumpForce = 5f;
-    [SerializeField] private float gravity = 9.81f;
+    [Header("Movement")]
+    public float moveSpeed;
 
-    //Initicalizing all the private variables needed for player movement and control
-    private CharacterController controller;
-    private Vector3 moveDirection;
-    private bool isJumping;
+    public float groundDrag;
 
-    //I am adding a few that wont be used til later, for animation and what not
-    private bool isFalling;
-    private bool isGrounded;
-    private bool isCrouched;
-    private bool isSprinting;
+    public float jumpForce;
+    public float jumpCooldown;
+    public float airMultiplier;
+    public int multiJumps;
+    public int maxJumps;
+    bool readyToJump = true;
 
-    void Start()
+    [Header("Keybinds")]
+    public KeyCode jumpKey = KeyCode.Space;
+
+
+    [Header("Ground Check")]
+    public float playerHeight;
+    public LayerMask whatIsGround;
+    bool grounded;
+
+
+
+
+
+    public Transform orientation;
+
+    float horizontalInput;
+    float verticalInput;
+
+    Vector3 moveDirection;
+
+    Rigidbody rb;
+
+
+    private void Start()
     {
-        controller = GetComponent<CharacterController>();
+        rb = GetComponent<Rigidbody>();
+        rb.freezeRotation = true;
+        multiJumps = maxJumps - 1;
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
+        // ground check
+        grounded = Physics.Raycast(transform.position, Vector3.down, playerHeight * 0.5f + 0.2f, whatIsGround);
+
+        MyInput();
+
+        // handeling  drag
+        if (grounded)
+        {
+            rb.drag = groundDrag;
+            multiJumps = maxJumps - 1;
+        }
+        else
+            rb.drag = 0f;
+    }
+
+
+    private void FixedUpdate()
+    {
+        MovePlayer();
+    }
+
+
+    private void MyInput()
+    {
+        horizontalInput = Input.GetAxisRaw("Horizontal");
+        verticalInput = Input.GetAxisRaw("Vertical");
+
+        if(Input.GetKeyDown(jumpKey) && readyToJump && grounded)
+        {
+            readyToJump = false;
+            
+            Jump();
+
+            Invoke(nameof(ResetJump), jumpCooldown);
+        }
+
+        else if (Input.GetKeyDown(jumpKey) && readyToJump && multiJumps > 0 && !grounded)
+        {
+            multiJumps--;
+            
+            readyToJump = false;
+
+            Jump();
+
+            Invoke(nameof(ResetJump), jumpCooldown);
+        }
+    }
+
+
+    private void MovePlayer()
+    {
+        // calculate movement direction
+        moveDirection = orientation.forward * verticalInput + orientation.right * horizontalInput;
         
+        // on ground
+        if(grounded)
+            rb.AddForce(moveDirection.normalized * moveSpeed * 10f, ForceMode.Force);
+            
+        // in air
+        else if(!grounded)
+            rb.AddForce(moveDirection.normalized * moveSpeed * 10f * airMultiplier, ForceMode.Force);
+
+    }
+
+    private void SpeedControl()
+    {
+        Vector3 flatVel = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+        // limit velocity if needed
+        if (flatVel.magnitude > moveSpeed)
+        {
+            Vector3 limitedVel = flatVel.normalized * moveSpeed;
+            rb.velocity = new Vector3(limitedVel.x, rb.velocity.y, limitedVel.z);
+        }
+    }
+
+    private void Jump()
+    {
+        // reset y velocity
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+    }
+
+    private void ResetJump()
+    {
+        readyToJump = true;
     }
 }
