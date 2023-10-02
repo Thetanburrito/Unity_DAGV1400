@@ -340,10 +340,10 @@ MonoBehaviour:
   groundDrag: 2
   crouchSpeed: 3.5
   crouchYScale: 0
+  underneath: 0
   jumpForce: 12
   jumpCooldown: 0.25
   airMultiplier: 0.4
-  multiJumps: 0
   maxJumps: 2
   jumpKey: 32
   sprintKey: 304
