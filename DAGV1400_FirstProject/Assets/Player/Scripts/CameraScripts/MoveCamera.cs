@@ -6,6 +6,7 @@ public class MoveCamera : MonoBehaviour
 {
 
     public Transform cameraPosition;
+    public Transform player;
 
     private void Update()
     {
