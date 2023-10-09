@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerController : MonoBehaviour
@@ -11,9 +9,13 @@ public class PlayerController : MonoBehaviour
     [Header("PlayerStats")]
     public float movementSpeed;
     public float limitedRange;
-    public float fireRate;
-    private bool readyToShoot;
     private float horizontalInput;
+
+    [Header("FireRate")]
+    public float fireRateDefault = 0.4f;
+    public float fireRate;
+    public float frPowerUp;
+    private bool readyToShoot;
 
 
     [Header("MiscInit")]
@@ -32,12 +34,24 @@ public class PlayerController : MonoBehaviour
     {
         GetInput();
         MovePlayer();
+
+        if (frPowerUp > 0)
+        {
+            frPowerUp -= Time.deltaTime;
+        }
+        else if (frPowerUp <= 0)
+        {
+            frPowerUp = 0;
+            fireRate = fireRateDefault;
+        }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        Destroy(other.gameObject);
+        //Destroy(other.gameObject);
     }
+
+
     private void MovePlayer()
     {
         transform.Translate(Vector3.right * horizontalInput * Time.deltaTime * movementSpeed);
@@ -71,4 +85,5 @@ public class PlayerController : MonoBehaviour
     {
         readyToShoot = true;
     }
+
 }

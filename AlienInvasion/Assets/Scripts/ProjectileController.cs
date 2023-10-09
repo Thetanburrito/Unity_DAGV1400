@@ -11,7 +11,14 @@ public class ProjectileController : MonoBehaviour
     {
         transform.Translate(Vector3.forward * speed);
 
-        Invoke(nameof(DestroyObject), lifeSpan);
+        if (lifeSpan > 0)
+        {
+            lifeSpan -= Time.deltaTime;
+        }
+        else if (lifeSpan <= 0)
+        {
+            DestroyObject();
+        }
     }
 
     private void DestroyObject()
