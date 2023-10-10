@@ -6,9 +6,6 @@ using UnityEngine.Jobs;
 public class PlayerController : MonoBehaviour
 {
     // initializing variables needed for basic player movement.
-    [Header("Player Attributes")]
-    public float height;
-    
     [Header("Movement")]
     private float moveSpeed;
     public float walkSpeed;
@@ -49,6 +46,7 @@ public class PlayerController : MonoBehaviour
     [Header("Slope Handling")]
     public float maxSlopeAngle;
     private RaycastHit slopeHit;
+    public float slopeGravity;
 
     private bool exitingSlope;
 
@@ -118,7 +116,7 @@ public class PlayerController : MonoBehaviour
         verticalInput = Input.GetAxisRaw("Vertical");
 
         // jumping
-        if (Input.GetKeyDown(jumpKey) && readyToJump && grounded)
+        if (Input.GetKeyDown(jumpKey) && readyToJump && grounded && !Input.GetKey(crouchKey) && !underneath)
         {
             readyToJump = false;
 
@@ -210,6 +208,16 @@ public class PlayerController : MonoBehaviour
 
     }
 
+    private void Jump()
+    {
+        // this variable is needed to jump off slopes
+        exitingSlope = true;
+        // reset y velocity
+        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
+
+        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+    }
+
     private void SpeedControl()
     {
 
@@ -217,6 +225,7 @@ public class PlayerController : MonoBehaviour
         // on slope
         if (OnSlope() && !exitingSlope)
         {
+            rb.AddForce(slopeHit.normal * -slopeGravity, ForceMode.Acceleration);
             rb.AddForce(GetSlopeMoveDirection() * moveSpeed * 20f, ForceMode.Force);
 
             if (rb.velocity.magnitude > moveSpeed)
@@ -237,15 +246,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private void Jump()
-    {
-        // this variable is needed to jump off slopes
-        exitingSlope = true;
-        // reset y velocity
-        rb.velocity = new Vector3(rb.velocity.x, 0f, rb.velocity.z);
-
-        rb.AddForce(transform.up * jumpForce, ForceMode.Impulse);
-    }
 
     private void ResetJump()
     {
@@ -255,7 +255,7 @@ public class PlayerController : MonoBehaviour
 
     private bool OnSlope()
     {
-        if(Physics.Raycast(transform.position, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.3f))
+        if(Physics.SphereCast(transform.position, 0.5f, Vector3.down, out slopeHit, playerHeight * 0.5f + 0.01f))
         {
             float angle = Vector3.Angle(Vector3.up, slopeHit.normal);
             return angle < maxSlopeAngle && angle != 0;
